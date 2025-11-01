@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import api from "../axios";
 import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -9,34 +9,16 @@ export default function Products() {
     price: "",
     description: "",
     category: "",
-    images: [],
+    images: []
   });
-
-  const [editSlug, setEditSlug] = useState(null);
-  const token = localStorage.getItem("token");
-
-  // Vite API URL
-  const API = import.meta.env.VITE_API_URL;
+  const [editId, setEditId] = useState(null);
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(`${API}/api/products`, {
-        method: "GET",
-        credentials: "include",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (res.status === 401 || res.status === 403) {
-        toast.error("Session expired! Please login again.");
-        localStorage.removeItem("token");
-        setTimeout(() => (window.location.href = "/login"), 1500);
-        return;
-      }
-
-      const data = await res.json();
-      setProducts(data.products || data);
+      const res = await api.get("/api/products");
+      setProducts(res.data.products || res.data);
     } catch {
-      toast.error("Failed to fetch products");
+      toast.error("Failed to load products");
     }
   };
 
@@ -44,83 +26,47 @@ export default function Products() {
     fetchProducts();
   }, []);
 
+  // ✅ Handle Edit Product
+  const handleEdit = (product) => {
+    setEditId(product._id);
+    setForm({
+      title: product.title,
+      price: product.price,
+      description: product.description,
+      category: product.category,
+      images: product.images || []
+    });
+  };
+
+  // ✅ Handle Submit (Add/Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const method = editSlug ? "PUT" : "POST";
-    const url = editSlug
-      ? `${API}/api/products/${editSlug}`
-      : `${API}/api/products`;
-
     try {
-      const res = await fetch(url, {
-        method,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Error");
-        return;
+      if (editId) {
+        await api.put(`/api/products/${editId}`, form);
+        toast.success("Product Updated ✅");
+      } else {
+        await api.post(`/api/products`, form);
+        toast.success("Product Created ✅");
       }
 
-      toast.success(editSlug ? "Product Updated" : "Product Added");
-
-      setForm({
-        title: "",
-        price: "",
-        description: "",
-        category: "",
-        images: [],
-      });
-
-      setEditSlug(null);
+      setEditId(null);
+      setForm({ title: "", price: "", description: "", category: "", images: [] });
       fetchProducts();
-    } catch {
-      toast.error("Error submitting form");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error");
     }
   };
 
-  const handleEdit = (p) => {
-    setForm({
-      title: p.title,
-      price: p.price,
-      description: p.description,
-      category: p.category,
-      images: p.images,
-    });
-    setEditSlug(p.slug);
-  };
-
-  const handleDelete = async (slug) => {
+  // ✅ Delete product
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete product?")) return;
-
     try {
-      const res = await fetch(`${API}/api/products/${slug}`, {
-        method: "DELETE",
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast.error(data.message || "Delete failed");
-        return;
-      }
-
-      toast.success("Product deleted ✅");
+      await api.delete(`/api/products/${id}`);
+      toast.success("Product Deleted");
       fetchProducts();
     } catch {
-      toast.error("Error deleting product");
+      toast.error("Delete failed");
     }
   };
 
@@ -129,78 +75,66 @@ export default function Products() {
       <ToastContainer />
 
       <div className="card p-3 mb-4">
-        <h3>{editSlug ? "Update Product" : "Add Product"}</h3>
+        <h3>{editId ? "Update Product" : "Add Product"}</h3>
+
         <form onSubmit={handleSubmit}>
-          <div className="mb-2">
-            <input
-              type="text"
-              placeholder="Title"
-              className="form-control"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              required
-            />
-          </div>
+          <input
+            type="text"
+            className="form-control mb-2"
+            placeholder="Title"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            required
+          />
 
-          <div className="mb-2">
-            <input
-              type="number"
-              placeholder="Price"
-              className="form-control"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              required
-            />
-          </div>
+          <input
+            type="number"
+            className="form-control mb-2"
+            placeholder="Price"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value })}
+            required
+          />
 
-          <div className="mb-2">
-            <textarea
-              placeholder="Description"
-              className="form-control"
-              value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
-            />
-          </div>
+          <textarea
+            className="form-control mb-2"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
 
-          <div className="mb-2">
-            <input
-              type="text"
-              placeholder="Category"
-              className="form-control"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-              required
-            />
-          </div>
+          <input
+            type="text"
+            className="form-control mb-2"
+            placeholder="Category"
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            required
+          />
 
-          <div className="mb-2">
-            <input
-              type="text"
-              placeholder="Paste Image URLs (comma separated)"
-              className="form-control"
-              value={form.images.map((i) => i.url).join(",")}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  images: e.target.value.split(",").map((url) => ({
-                    url: url.trim(),
-                    public_id: "",
-                  })),
-                })
-              }
-              required
-            />
-          </div>
+          <input
+            type="text"
+            className="form-control mb-2"
+            placeholder="Image URLs (comma separated)"
+            value={form.images.map((i) => i.url).join(",")}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                images: e.target.value.split(",").map((url) => ({
+                  url: url.trim(),
+                  public_id: ""
+                }))
+              })
+            }
+            required
+          />
 
-          <button className="btn btn-success">
-            {editSlug ? "Update" : "Add"}
-          </button>
+          <button className="btn btn-success">{editId ? "Update" : "Add"}</button>
         </form>
       </div>
 
       <h3>Product List</h3>
+
       <table className="table table-bordered table-hover">
         <thead className="table-dark">
           <tr>
@@ -210,13 +144,13 @@ export default function Products() {
             <th>Description</th>
             <th>Category</th>
             <th>Image</th>
-            <th>Action</th>
+            <th>Actions</th>
           </tr>
         </thead>
 
         <tbody>
           {products?.map((p, index) => (
-            <tr key={p.slug}>
+            <tr key={p._id}>
               <td>{index + 1}</td>
               <td>{p.title}</td>
               <td>₹{p.price}</td>
@@ -226,9 +160,9 @@ export default function Products() {
                 {p.images?.length > 0 ? (
                   <img
                     src={p.images[0].url}
-                    alt="product"
                     width="50"
                     height="50"
+                    alt="product"
                     style={{ objectFit: "cover", borderRadius: "5px" }}
                   />
                 ) : (
@@ -236,16 +170,10 @@ export default function Products() {
                 )}
               </td>
               <td>
-                <button
-                  className="btn btn-primary btn-sm me-2"
-                  onClick={() => handleEdit(p)}
-                >
+                <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(p)}>
                   Edit
                 </button>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => handleDelete(p.slug)}
-                >
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p._id)}>
                   Delete
                 </button>
               </td>
@@ -255,7 +183,7 @@ export default function Products() {
           {products.length === 0 && (
             <tr>
               <td colSpan="7" className="text-center">
-                No products found
+                No Products Found
               </td>
             </tr>
           )}

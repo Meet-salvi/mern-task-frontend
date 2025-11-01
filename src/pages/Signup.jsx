@@ -1,22 +1,15 @@
 import { useState } from "react";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import api from "../axios";
 
 export default function Signup() {
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState(
-    {
-      name: "",
-      email: "",
-      password: "",
-    },
-    { withCredentials: true }
-  );
-
-  // Vite API URL
-  const API = import.meta.env.VITE_API_URL;
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: ""
+  });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -24,21 +17,18 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await axios.post(`${API}/api/auth/register`, formData);
+      const res = await api.post("/api/auth/register", formData);
 
-      toast.success(res.data.message || "Registered Successfully");
+      toast.success(res.data?.message || "Signup Successful ✅");
 
-      if (res.data.accessToken) {
+      if (res.data?.accessToken) {
         localStorage.setItem("token", res.data.accessToken);
       }
 
-      setTimeout(() => {
-        navigate("/");
-      }, 1000);
+      setTimeout(() => navigate("/"), 800);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Registration Failed");
+      toast.error(err.response?.data?.message || "Signup failed ❌");
     }
   };
 

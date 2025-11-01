@@ -1,39 +1,26 @@
 import { useState } from "react";
-import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import api from "../axios";
 
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const API = import.meta.env.VITE_API_URL;
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await axios.post(
-        `${API}/api/auth/login`,
-        {
-          email,
-          password,
-        },
-        { withCredentials: true }
-      );
+      const res = await api.post("/api/auth/login", { email, password });
 
-      toast.success(res.data.message || "Login Successful");
-
-      if (res.data.accessToken) {
+      if (res.data?.accessToken) {
         localStorage.setItem("token", res.data.accessToken);
       }
 
-      setTimeout(() => {
-        navigate("/product");
-      }, 1000);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Invalid email or password");
+      toast.success("Login Successful ✅");
+      setTimeout(() => navigate("/product"), 800);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Login failed ❌");
     }
   };
 
