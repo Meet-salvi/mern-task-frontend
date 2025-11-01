@@ -14,10 +14,14 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${API}/api/auth/login`, {
-        email,
-        password,
-      });
+      const res = await axios.post(
+        `${API}/api/auth/login`,
+        {
+          email,
+          password,
+        },
+        { withCredentials: true }
+      );
 
       toast.success(res.data.message || "Login Successful");
 

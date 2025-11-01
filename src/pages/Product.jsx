@@ -21,6 +21,8 @@ export default function Products() {
   const fetchProducts = async () => {
     try {
       const res = await fetch(`${API}/api/products`, {
+        method: "GET",
+        credentials: "include",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
@@ -53,6 +55,7 @@ export default function Products() {
     try {
       const res = await fetch(url, {
         method,
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -101,6 +104,7 @@ export default function Products() {
     try {
       const res = await fetch(`${API}/api/products/${slug}`, {
         method: "DELETE",
+        credentials: "include",
         headers: {
           Authorization: `Bearer ${token}`,
         },

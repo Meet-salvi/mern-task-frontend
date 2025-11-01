@@ -6,11 +6,14 @@ import { useNavigate } from "react-router-dom";
 export default function Signup() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState(
+    {
+      name: "",
+      email: "",
+      password: "",
+    },
+    { withCredentials: true }
+  );
 
   // Vite API URL
   const API = import.meta.env.VITE_API_URL;
