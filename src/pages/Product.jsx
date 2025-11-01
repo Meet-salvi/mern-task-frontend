@@ -9,16 +9,23 @@ export default function Products() {
     price: "",
     description: "",
     category: "",
-    images: []
+    images: [],
   });
-  const [editId, setEditId] = useState(null);
+
+  const [editSlug, setEditSlug] = useState(null);
 
   const fetchProducts = async () => {
     try {
       const res = await api.get("/api/products");
       setProducts(res.data.products || res.data);
-    } catch {
-      toast.error("Failed to load products");
+    } catch (err) {
+      if (err.response?.status === 401) {
+        toast.error("Session expired! Please login again.");
+        localStorage.removeItem("token");
+        setTimeout(() => (window.location.href = "/login"), 1500);
+      } else {
+        toast.error("Failed to load products");
+      }
     }
   };
 
@@ -26,47 +33,46 @@ export default function Products() {
     fetchProducts();
   }, []);
 
-  // ✅ Handle Edit Product
-  const handleEdit = (product) => {
-    setEditId(product._id);
-    setForm({
-      title: product.title,
-      price: product.price,
-      description: product.description,
-      category: product.category,
-      images: product.images || []
-    });
-  };
-
-  // ✅ Handle Submit (Add/Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      if (editId) {
-        await api.put(`/api/products/${editId}`, form);
+      if (editSlug) {
+        await api.put(`/api/products/${editSlug}`, form);
         toast.success("Product Updated ✅");
       } else {
         await api.post(`/api/products`, form);
-        toast.success("Product Created ✅");
+        toast.success("Product Added ✅");
       }
 
-      setEditId(null);
+      setEditSlug(null);
       setForm({ title: "", price: "", description: "", category: "", images: [] });
       fetchProducts();
     } catch (err) {
-      toast.error(err.response?.data?.message || "Error");
+      toast.error(err.response?.data?.message || "Error submitting form");
     }
   };
 
-  // ✅ Delete product
-  const handleDelete = async (id) => {
+  const handleEdit = (p) => {
+    setForm({
+      title: p.title,
+      price: p.price,
+      description: p.description,
+      category: p.category,
+      images: p.images,
+    });
+    setEditSlug(p.slug);
+  };
+
+  const handleDelete = async (slug) => {
     if (!window.confirm("Delete product?")) return;
+
     try {
-      await api.delete(`/api/products/${id}`);
-      toast.success("Product Deleted");
+      await api.delete(`/api/products/${slug}`);
+      toast.success("Product deleted ✅");
       fetchProducts();
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Delete failed");
     }
   };
 
@@ -75,7 +81,7 @@ export default function Products() {
       <ToastContainer />
 
       <div className="card p-3 mb-4">
-        <h3>{editId ? "Update Product" : "Add Product"}</h3>
+        <h3>{editSlug ? "Update Product" : "Add Product"}</h3>
 
         <form onSubmit={handleSubmit}>
           <input
@@ -122,14 +128,16 @@ export default function Products() {
                 ...form,
                 images: e.target.value.split(",").map((url) => ({
                   url: url.trim(),
-                  public_id: ""
-                }))
+                  public_id: "",
+                })),
               })
             }
             required
           />
 
-          <button className="btn btn-success">{editId ? "Update" : "Add"}</button>
+          <button className="btn btn-success">
+            {editSlug ? "Update" : "Add"}
+          </button>
         </form>
       </div>
 
@@ -150,7 +158,7 @@ export default function Products() {
 
         <tbody>
           {products?.map((p, index) => (
-            <tr key={p._id}>
+            <tr key={p.slug}>
               <td>{index + 1}</td>
               <td>{p.title}</td>
               <td>₹{p.price}</td>
@@ -173,7 +181,7 @@ export default function Products() {
                 <button className="btn btn-primary btn-sm me-2" onClick={() => handleEdit(p)}>
                   Edit
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p._id)}>
+                <button className="btn btn-danger btn-sm" onClick={() => handleDelete(p.slug)}>
                   Delete
                 </button>
               </td>
