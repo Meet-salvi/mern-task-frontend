@@ -34,7 +34,7 @@ export default function Signup() {
 
       //Redirect after signup
       setTimeout(() => {
-        navigate("/product");
+        navigate("/");
       }, 1000);
     } catch (err) {
       toast.error(err.response?.data?.message || "Registration Failed");
