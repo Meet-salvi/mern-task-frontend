@@ -17,18 +17,26 @@ export default function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const res = await api.post("/api/auth/register", formData);
 
-      toast.success(res.data?.message || "Signup Successful ✅");
+      if (res.data?.message) {
+        toast.success(res.data.message);
+      } else {
+        toast.success("Signup Successful ✅");
+      }
 
+      // ✅ Only store token if backend sends it
       if (res.data?.accessToken) {
         localStorage.setItem("token", res.data.accessToken);
       }
 
       setTimeout(() => navigate("/"), 800);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Signup failed ❌");
+      const errorMsg = err?.response?.data?.message || "Signup failed ❌";
+      toast.error(errorMsg);
+      console.error("Signup Error:", err); // useful debug
     }
   };
 

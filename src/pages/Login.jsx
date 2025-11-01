@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import api from "../axios";
+import api from "../axios"; // axios instance
 
 export default function Login() {
   const navigate = useNavigate();
@@ -12,17 +12,21 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await api.post(
-        "/api/auth/login",
-        { email, password },
-        { withCredentials: true }
-      );
+      const res = await api.post("/api/auth/login", { email, password });
+
+      if (!res.data?.accessToken) {
+        toast.error("Server did not send access token ❌");
+        return;
+      }
 
       localStorage.setItem("token", res.data.accessToken);
       toast.success("Login Successful ✅");
+
       setTimeout(() => navigate("/product"), 800);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Login failed ❌");
+      const errorMsg = err?.response?.data?.message || "Server error ❌";
+      toast.error(errorMsg);
+      console.error("Login error:", err);
     }
   };
 
