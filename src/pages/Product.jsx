@@ -15,7 +15,7 @@ export default function Products() {
   const [editSlug, setEditSlug] = useState(null);
   const token = localStorage.getItem("token");
 
-  // ✅ Vite API URL
+  // Vite API URL
   const API = import.meta.env.VITE_API_URL;
 
   const fetchProducts = async () => {
