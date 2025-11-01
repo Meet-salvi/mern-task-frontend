@@ -29,14 +29,23 @@ export default function Signup() {
         localStorage.setItem("token", res.data.accessToken);
       }
 
-      setTimeout(() => navigate("/"), 500);
-    } catch (err) {
-      console.error("Signup Error:", err);
+      setTimeout(() => navigate("/login"), 500);
 
-      toast.error(
+    } catch (err) {
+      console.error("Signup Error =>", err);
+
+      // ✅ Handle validation errors array (from express-validator)
+      if (err?.response?.data?.errors) {
+        err.response.data.errors.forEach((error) => toast.error(error.msg));
+        return;
+      }
+
+      // ✅ Proper backend messages
+      const message =
         err?.response?.data?.message ||
-        "Signup failed, but user may be created ✅ try login"
-      );
+        "Signup failed ❌ Please try again.";
+
+      toast.error(message);
     }
   };
 
@@ -49,27 +58,45 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit}>
             <div className="mb-3">
-              <input type="text" name="name" placeholder="Full Name"
-                className="form-control" value={formData.name}
-                onChange={handleChange} required />
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                className="form-control"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="mb-3">
-              <input type="email" name="email" placeholder="Email"
-                className="form-control" value={formData.email}
-                onChange={handleChange} required />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                className="form-control"
+                value={formData.email}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="mb-3">
-              <input type="password" name="password" placeholder="Password"
-                className="form-control" value={formData.password}
-                onChange={handleChange} required />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                className="form-control"
+                value={formData.password}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <button className="btn btn-success w-100">Sign Up</button>
 
             <p className="text-center mt-3">
-              Already have an account? <a href="/">Login</a>
+              Already have an account? <a href="/login">Login</a>
             </p>
           </form>
         </div>
