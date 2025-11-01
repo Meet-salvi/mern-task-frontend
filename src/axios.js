@@ -4,36 +4,51 @@ export const API = import.meta.env.VITE_API_URL;
 
 const instance = axios.create({
   baseURL: API,
-  withCredentials: true,
+  withCredentials: true, // Always send cookies
 });
 
-// ✅ Attach token from localStorage
-instance.interceptors.request.use((req) => {
+// ✅ Attach Access Token to Requests
+instance.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  if (token) {
-    req.headers.Authorization = `Bearer ${token}`;
-  }
-  return req;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
-// ✅ Refresh token interceptor
+// ✅ Auto Refresh Access Token
 instance.interceptors.response.use(
-  (res) => res,
-  async (err) => {
-    if (err.response?.status === 401 && !err.config._retry) {
-      err.config._retry = true;
-      try {
-        const refresh = await instance.post("/api/auth/refresh-token");
-        localStorage.setItem("token", refresh.data.accessToken);
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-        err.config.headers.Authorization = `Bearer ${refresh.data.accessToken}`;
-        return instance(err.config);
-      } catch {
+    // Token expired & not retried before
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes("/auth/refresh")
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        // Refresh access token using cookies
+        const refreshResponse = await instance.post("/api/auth/refresh");
+
+        const newAccessToken = refreshResponse.data.accessToken;
+
+        // Save new token
+        localStorage.setItem("token", newAccessToken);
+
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return instance(originalRequest);
+      } catch (err) {
+        
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        window.location.href = "/login"; 
+        return Promise.reject(err);
       }
     }
-    return Promise.reject(err);
+
+    return Promise.reject(error);
   }
 );
 

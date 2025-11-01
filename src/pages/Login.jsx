@@ -10,13 +10,15 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await api.post("/api/auth/login", { email, password });
+      const res = await api.post(
+        "/api/auth/login",
+        { email, password },
+        { withCredentials: true }
+      );
 
-      if (res.data?.accessToken) {
-        localStorage.setItem("token", res.data.accessToken);
-      }
-
+      localStorage.setItem("token", res.data.accessToken);
       toast.success("Login Successful ✅");
       setTimeout(() => navigate("/product"), 800);
     } catch (err) {
@@ -27,36 +29,30 @@ export default function Login() {
   return (
     <>
       <ToastContainer />
-
       <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
         <div className="card p-4 shadow-lg" style={{ width: 400 }}>
           <h2 className="text-center mb-4">Login</h2>
 
           <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <input
-                type="email"
-                placeholder="Email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
+            <input
+              type="email"
+              placeholder="Email"
+              className="form-control mb-2"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-            <div className="mb-3">
-              <input
-                type="password"
-                placeholder="Password"
-                className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            <input
+              type="password"
+              placeholder="Password"
+              className="form-control mb-2"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
             <button className="btn btn-primary w-100">Login</button>
-
             <p className="text-center mt-3">
               Don't have an account? <a href="/signup">Sign Up</a>
             </p>
