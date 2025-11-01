@@ -5,34 +5,31 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const API = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:8000/api/auth/login", {
+      const res = await axios.post(`${API}/api/auth/login`, {
         email,
         password,
       });
 
       toast.success(res.data.message || "Login Successful");
 
-      // Save token returned from backend
       if (res.data.accessToken) {
         localStorage.setItem("token", res.data.accessToken);
       }
 
-      //Redirect after success
       setTimeout(() => {
         navigate("/product");
       }, 1000);
     } catch (error) {
-      toast.error(
-        error.response?.data?.message || "Invalid email or password"
-      );
+      toast.error(error.response?.data?.message || "Invalid email or password");
     }
   };
 

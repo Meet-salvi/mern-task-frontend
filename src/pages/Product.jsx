@@ -13,12 +13,14 @@ export default function Products() {
   });
 
   const [editSlug, setEditSlug] = useState(null);
-
   const token = localStorage.getItem("token");
+
+  // ✅ Vite API URL
+  const API = import.meta.env.VITE_API_URL;
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/products", {
+      const res = await fetch(`${API}/api/products`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
@@ -45,8 +47,8 @@ export default function Products() {
 
     const method = editSlug ? "PUT" : "POST";
     const url = editSlug
-      ? `http://localhost:8000/api/products/${editSlug}`
-      : "http://localhost:8000/api/products";
+      ? `${API}/api/products/${editSlug}`
+      : `${API}/api/products`;
 
     try {
       const res = await fetch(url, {
@@ -97,7 +99,7 @@ export default function Products() {
     if (!window.confirm("Delete product?")) return;
 
     try {
-      const res = await fetch(`http://localhost:8000/api/products/${slug}`, {
+      const res = await fetch(`${API}/api/products/${slug}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -215,15 +217,11 @@ export default function Products() {
               <td>{p.title}</td>
               <td>₹{p.price}</td>
               <td>{p.description}</td>
-
-              {/* ✅ Show Category */}
               <td>{p.category}</td>
-
-              {/* ✅ Show only first image */}
               <td>
                 {p.images?.length > 0 ? (
                   <img
-                    src={p.images[0].url} // ✅ Access .url
+                    src={p.images[0].url}
                     alt="product"
                     width="50"
                     height="50"
@@ -233,7 +231,6 @@ export default function Products() {
                   "No image"
                 )}
               </td>
-
               <td>
                 <button
                   className="btn btn-primary btn-sm me-2"

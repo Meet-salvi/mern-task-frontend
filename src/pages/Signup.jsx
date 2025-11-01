@@ -12,6 +12,9 @@ export default function Signup() {
     password: "",
   });
 
+  // ✅ Vite API URL
+  const API = import.meta.env.VITE_API_URL;
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -20,19 +23,14 @@ export default function Signup() {
     e.preventDefault();
 
     try {
-      const res = await axios.post(
-        "http://localhost:8000/api/auth/register",
-        formData
-      );
+      const res = await axios.post(`${API}/api/auth/register`, formData);
 
       toast.success(res.data.message || "Registered Successfully");
 
-      // Save token returned from backend
       if (res.data.accessToken) {
         localStorage.setItem("token", res.data.accessToken);
       }
 
-      //Redirect after signup
       setTimeout(() => {
         navigate("/");
       }, 1000);
